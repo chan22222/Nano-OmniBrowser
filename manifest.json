@@ -1,0 +1,22 @@
+{
+  "name": "Gemini OmniBrowser",
+  "short_name": "Gemini",
+  "description": "Gemini 3 Pro & Nano Banana 2",
+  "start_url": "/gemini/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6070760100543970"
+     crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <title>Gemini OmniBrowser</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="password-config.js"></script>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+            touch-action: pan-y;
+            width: 100%;
+            max-width: 100vw;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .animate-bounce-dot {
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .loading-text {
+            display: inline-block;
+            animation: bounce 1s infinite;
+        }
+        .loading-char {
+            display: inline-block;
+            animation: bounce 1s infinite;
+        }
+        .loading-spinner-wrapper {
+            display: inline-block;
+            animation: bounce 1s infinite;
+        }
+        .loading-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #475569;
+            border-top-color: #8b5cf6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- Password Protection Layer -->
+    <div id="passwordLayer" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center">
+        <div class="max-w-md w-full mx-4">
+            <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+                        <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold text-slate-200 mb-2">접속 암호 입력</h1>
+                    <p class="text-sm text-slate-400">이 페이지에 접속하려면 암호를 입력하세요</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <input
+                            type="password"
+                            id="passwordInput"
+                            class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all"
+                            placeholder="암호를 입력하세요..."
+                            onkeydown="if(event.key === 'Enter') checkPassword()"
+                            autofocus
+                        >
+                        <div id="passwordError" class="hidden mt-2 text-sm text-red-400 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>잘못된 암호입니다. 다시 시도하세요.</span>
+                        </div>
+                    </div>
+
+                    <button
+                        onclick="checkPassword()"
+                        class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                        </svg>
+                        접속하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Top Bar - Browser URL bar aesthetic -->
+    <header class="fixed top-0 left-0 right-0 h-14 bg-slate-900 border-b border-slate-800 flex items-center px-4 select-none z-30">
+        <div class="flex gap-1.5 flex-shrink-0">
+            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+        </div>
+        <div class="flex-1 flex justify-center px-6">
+            <div class="flex items-center gap-1.5 bg-slate-800 py-1.5 px-4 rounded-full border border-slate-700 text-xs text-slate-400 w-full max-w-[450px]">
+                <svg class="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                <span><span class="opacity-50">https://</span><span class="text-slate-300"> ch4n.co.kr</span> /gemini</span>
+            </div>
+        </div>
+        <button onclick="newSession()" class="text-slate-500 hover:text-slate-300 transition-colors p-2 rounded-lg hover:bg-slate-800 flex-shrink-0" title="새 대화">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col overflow-hidden pt-14">
+        <!-- Message List -->
+        <div id="chatArea" class="flex-1 overflow-y-auto px-4 py-6 scroll-smooth relative z-10">
+            <div class="max-w-4xl mx-auto space-y-8">
+                <!-- Welcome Message -->
+                <div id="welcomeMessage" class="flex flex-col items-center justify-center h-[50vh] text-center text-slate-500">
+                    <div class="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-blue-900/10 ring-1 ring-slate-700/50">
+                        <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold text-slate-200 mb-2">Gemini OmniBrowser</h1>
+                    <p class="max-w-md text-sm mb-6">
+                        탭을 전환하여 <span class="text-blue-400 font-mono">Gemini 3 Pro</span>로 추론하거나<br> <span class="text-purple-400 font-mono">Nano Banana 2</span>로 이미지를 생성하세요.
+                    </p>
+                    <div id="exampleButtons" class="flex flex-wrap gap-2 justify-center">
+                        <button onclick="setPrompt('파이썬으로 퀵소트 알고리즘 구현해줘')" class="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all">파이썬으로 퀵소트 알고리즘 구현해줘</button>
+                        <button onclick="setPrompt('양자컴퓨팅의 원리를 쉽게 설명해줘')" class="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all">양자컴퓨팅의 원리를 쉽게 설명해줘</button>
+                        <button onclick="setPrompt('인공지능 윤리의 주요 쟁점은?')" class="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all">인공지능 윤리의 주요 쟁점은?</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div id="inputAreaWrapper" class="w-full px-4 pb-4 pt-2 fixed bottom-0 left-0 right-0 z-20 flex justify-center bg-gradient-to-t from-[#0f172a] via-[#0f172a] to-transparent">
+            <div id="inputArea" class="bg-slate-800 backdrop-blur-md rounded-2xl shadow-xl border border-slate-700 p-2 flex flex-col gap-2 transition-all duration-300 w-full max-w-4xl">
+
+                <!-- Model Tabs -->
+                <div class="flex gap-2 px-2 pt-1">
+                    <button id="tabText" onclick="setModel('gemini-3-pro-preview')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-blue-600 text-white shadow-lg shadow-blue-900/20">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        Gemini 3 Pro (Text)
+                    </button>
+                    <button id="tabImage" onclick="setModel('gemini-3-pro-image-preview')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors text-slate-400 hover:text-slate-200 hover:bg-slate-700/50">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Nano Banana 2 (Image)
+                    </button>
+                </div>
+
+                <!-- Image Mode Tip -->
+                <div id="imageTip" class="hidden px-3 py-2 text-xs text-slate-400 bg-slate-900/50 rounded-lg mx-2">
+                    💡 <span class="text-slate-300">Nano Banana 2</span>는 창조보다, 변형을 더 잘합니다.
+                </div>
+
+                <!-- Attachment Previews -->
+                <div id="attachmentPreview" class="hidden flex gap-2 px-2 pb-1 overflow-x-auto"></div>
+
+                <!-- Omnibar Input -->
+                <div class="relative flex items-center bg-slate-900/50 rounded-xl border border-slate-700 focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50 transition-all">
+                    <div class="pl-3 flex items-center gap-2">
+                        <button onclick="document.getElementById('fileInput').click()" class="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-800" title="파일 첨부">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                            </svg>
+                        </button>
+                        <input type="file" id="fileInput" class="hidden" accept="image/*" multiple onchange="handleFileSelect(event)">
+                    </div>
+
+                    <textarea
+                        id="promptInput"
+                        placeholder="Gemini에게 질문하세요..."
+                        class="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-slate-100 placeholder-slate-500 py-4 px-3 text-sm sm:text-base font-medium resize-none overflow-hidden"
+                        rows="1"
+                        style="max-height: 6.5rem;"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="autoResizeTextarea(this)"
+                    ></textarea>
+
+                    <button id="sendBtn" onclick="sendMessage()" class="mr-2 p-2.5 rounded-lg transition-all bg-slate-800 text-slate-600 cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p id="modelLabel" class="text-[10px] text-slate-500 text-center pb-1">
+                    Powered by Gemini 3 Pro
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4" onclick="closeModal(event)">
+        <button onclick="closeModal()" class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <img id="modalImage" src="" alt="Full size" class="max-w-[90%] max-h-[90%] rounded-lg">
+        <a id="downloadBtn" href="" download="" class="absolute bottom-4 right-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 flex items-center gap-2 text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            저장
+        </a>
+    </div>
+
+    <script>
+        // Password Protection Functions
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const passwordError = document.getElementById('passwordError');
+            const password = passwordInput.value.trim();
+
+            // 허용된 암호 체크
+            const allowedPasswords = window.PASSWORD_CONFIG ? PASSWORD_CONFIG.passwords : ['1315', 'seul'];
+            if (allowedPasswords.includes(password)) {
+                // 인증 성공
+                sessionStorage.setItem('authenticated', 'true');
+                document.getElementById('passwordLayer').style.display = 'none';
+                passwordInput.value = '';
+            } else {
+                // 인증 실패
+                passwordError.classList.remove('hidden');
+                passwordInput.classList.add('border-red-500');
+                passwordInput.value = '';
+
+                // 3초 후 에러 메시지 숨기기
+                setTimeout(() => {
+                    passwordError.classList.add('hidden');
+                    passwordInput.classList.remove('border-red-500');
+                }, 3000);
+            }
+        }
+
+        // 페이지 로드 시 인증 상태 체크
+        window.addEventListener('DOMContentLoaded', function() {
+            const isAuthenticated = sessionStorage.getItem('authenticated');
+
+            if (isAuthenticated === 'true') {
+                // 이미 인증된 경우 암호 화면 숨기기
+                document.getElementById('passwordLayer').style.display = 'none';
+            } else {
+                // 인증되지 않은 경우 암호 입력 필드에 포커스
+                document.getElementById('passwordInput').focus();
+            }
+        });
+
+        // State
+        let textSessionId = null;  // Gemini 3 Pro 세션
+        let imageSessionId = null; // Nano Banana 2 세션
+        let isGenerating = false;
+        let currentModel = 'gemini-3-pro-preview';
+        let currentAbortController = null; // 요청 중단용
+
+        // 모델별 상태 분리
+        let textMessageHistory = [];  // Gemini 3 Pro 대화 히스토리
+        let imageMessageHistory = []; // Nano Banana 2 대화 히스토리
+        let textUploadedImages = [];  // Gemini 3 Pro 업로드 이미지
+        let imageUploadedImages = []; // Nano Banana 2 업로드 이미지
+        let textPrompt = '';          // Gemini 3 Pro 프롬프트
+        let imagePrompt = '';         // Nano Banana 2 프롬프트
+        let textLastGeneratedImages = [];  // Gemini 3 Pro 마지막 생성 이미지
+        let imageLastGeneratedImages = []; // Nano Banana 2 마지막 생성 이미지
+
+        // DOM Elements
+        const chatArea = document.getElementById('chatArea');
+        const promptInput = document.getElementById('promptInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const attachmentPreview = document.getElementById('attachmentPreview');
+
+        // Helper 함수들
+        function isImageModel(model = currentModel) {
+            return model.includes('image');
+        }
+
+        function saveCurrentModelState() {
+            // 현재 모델의 상태 저장
+            setCurrentPrompt(promptInput.value);
+        }
+
+        function restoreCurrentModelState() {
+            // 현재 모델의 상태 복원
+            promptInput.value = getCurrentPrompt();
+
+            // 업로드된 이미지 복원
+            updateAttachmentPreview();
+
+            // 전송 버튼 상태 업데이트
+            updateSendButton();
+        }
+
+        function switchModelMessages() {
+            // 이전 모델의 상태 저장
+            saveCurrentModelState();
+
+            // 채팅 영역 클리어
+            const container = chatArea.querySelector('.max-w-4xl');
+            const messages = container.querySelectorAll('.flex.gap-4');
+            messages.forEach(msg => msg.remove());
+
+            // 현재 모델의 히스토리 가져오기
+            const currentHistory = getCurrentMessageHistory();
+
+            if (currentHistory && currentHistory.length > 0) {
+                // 환영 메시지 숨김
+                if (welcomeMessage) welcomeMessage.style.display = 'none';
+
+                // 현재 모델의 메시지 복원
+                currentHistory.forEach(msg => {
+                    addMessageToDOM(msg.role, msg.text, msg.images || [], msg.timestamp);
+                });
+            } else {
+                // 메시지가 없으면 환영 메시지 표시
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'flex';
+                }
+            }
+
+            // 현재 모델의 입력 상태 복원
+            restoreCurrentModelState();
+        }
+
+        function getCurrentSessionId() {
+            return isImageModel() ? imageSessionId : textSessionId;
+        }
+
+        function setCurrentSessionId(id) {
+            if (isImageModel()) {
+                imageSessionId = id;
+            } else {
+                textSessionId = id;
+            }
+        }
+
+        function getCurrentMessageHistory() {
+            return isImageModel() ? imageMessageHistory : textMessageHistory;
+        }
+
+        function setCurrentMessageHistory(history) {
+            if (isImageModel()) {
+                imageMessageHistory = history;
+            } else {
+                textMessageHistory = history;
+            }
+        }
+
+        function getCurrentUploadedImages() {
+            return isImageModel() ? imageUploadedImages : textUploadedImages;
+        }
+
+        function setCurrentUploadedImages(images) {
+            if (isImageModel()) {
+                imageUploadedImages = images;
+            } else {
+                textUploadedImages = images;
+            }
+        }
+
+        function getCurrentPrompt() {
+            return isImageModel() ? imagePrompt : textPrompt;
+        }
+
+        function setCurrentPrompt(prompt) {
+            if (isImageModel()) {
+                imagePrompt = prompt;
+            } else {
+                textPrompt = prompt;
+            }
+        }
+
+        function getCurrentLastGeneratedImages() {
+            return isImageModel() ? imageLastGeneratedImages : textLastGeneratedImages;
+        }
+
+        function setCurrentLastGeneratedImages(images) {
+            if (isImageModel()) {
+                imageLastGeneratedImages = images;
+            } else {
+                textLastGeneratedImages = images;
+            }
+        }
+
+        // LocalStorage 함수들
+        function saveToLocalStorage() {
+            try {
+                // 현재 모델의 프롬프트 저장
+                saveCurrentModelState();
+
+                // 텍스트 모델 저장
+                const textData = {
+                    sessionId: textSessionId,
+                    messages: textMessageHistory,
+                    uploadedImages: textUploadedImages,
+                    prompt: textPrompt,
+                    lastGeneratedImages: textLastGeneratedImages,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('gemini_chat_text', JSON.stringify(textData));
+
+                // 이미지 모델 저장
+                const imageData = {
+                    sessionId: imageSessionId,
+                    messages: imageMessageHistory,
+                    uploadedImages: imageUploadedImages,
+                    prompt: imagePrompt,
+                    lastGeneratedImages: imageLastGeneratedImages,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('gemini_chat_image', JSON.stringify(imageData));
+
+                // 마지막 사용 모델 저장
+                localStorage.setItem('gemini_last_model', currentModel);
+            } catch (e) {
+                console.error('localStorage 저장 실패:', e);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const textData = localStorage.getItem('gemini_chat_text');
+                const imageData = localStorage.getItem('gemini_chat_image');
+
+                const result = {
+                    text: textData ? JSON.parse(textData) : null,
+                    image: imageData ? JSON.parse(imageData) : null,
+                    lastModel: localStorage.getItem('gemini_last_model') || 'gemini-3-pro-preview'
+                };
+
+                return result;
+            } catch (e) {
+                console.error('localStorage 로드 실패:', e);
+                return { text: null, image: null, lastModel: 'gemini-3-pro-preview' };
+            }
+        }
+
+        function clearLocalStorage(modelType = 'current') {
+            try {
+                if (modelType === 'all') {
+                    localStorage.removeItem('gemini_chat_text');
+                    localStorage.removeItem('gemini_chat_image');
+                    textMessageHistory = [];
+                    imageMessageHistory = [];
+                    textUploadedImages = [];
+                    imageUploadedImages = [];
+                    textPrompt = '';
+                    imagePrompt = '';
+                    textLastGeneratedImages = [];
+                    imageLastGeneratedImages = [];
+                } else if (modelType === 'text') {
+                    localStorage.removeItem('gemini_chat_text');
+                    textMessageHistory = [];
+                    textUploadedImages = [];
+                    textPrompt = '';
+                    textLastGeneratedImages = [];
+                } else if (modelType === 'image') {
+                    localStorage.removeItem('gemini_chat_image');
+                    imageMessageHistory = [];
+                    imageUploadedImages = [];
+                    imagePrompt = '';
+                    imageLastGeneratedImages = [];
+                } else {
+                    // current
+                    if (isImageModel()) {
+                        localStorage.removeItem('gemini_chat_image');
+                        imageMessageHistory = [];
+                        imageUploadedImages = [];
+                        imagePrompt = '';
+                        imageLastGeneratedImages = [];
+                    } else {
+                        localStorage.removeItem('gemini_chat_text');
+                        textMessageHistory = [];
+                        textUploadedImages = [];
+                        textPrompt = '';
+                        textLastGeneratedImages = [];
+                    }
+                }
+            } catch (e) {
+                console.error('localStorage 클리어 실패:', e);
+            }
+        }
+
+        function restoreMessages() {
+            const saved = loadFromLocalStorage();
+
+            // 텍스트 모델 데이터 복원
+            if (saved.text) {
+                if (saved.text.sessionId) textSessionId = saved.text.sessionId;
+                if (saved.text.messages) textMessageHistory = saved.text.messages;
+                if (saved.text.uploadedImages) textUploadedImages = saved.text.uploadedImages;
+                if (saved.text.prompt) textPrompt = saved.text.prompt;
+                if (saved.text.lastGeneratedImages) textLastGeneratedImages = saved.text.lastGeneratedImages;
+            }
+
+            // 이미지 모델 데이터 복원
+            if (saved.image) {
+                if (saved.image.sessionId) imageSessionId = saved.image.sessionId;
+                if (saved.image.messages) imageMessageHistory = saved.image.messages;
+                if (saved.image.uploadedImages) imageUploadedImages = saved.image.uploadedImages;
+                if (saved.image.prompt) imagePrompt = saved.image.prompt;
+                if (saved.image.lastGeneratedImages) imageLastGeneratedImages = saved.image.lastGeneratedImages;
+            }
+
+            // 마지막 사용 모델 복원
+            if (saved.lastModel) {
+                currentModel = saved.lastModel;
+                setModel(currentModel);
+            }
+
+            // 현재 모델의 메시지 표시
+            const currentHistory = getCurrentMessageHistory();
+            if (currentHistory && currentHistory.length > 0) {
+                // 환영 메시지 숨김
+                if (welcomeMessage) welcomeMessage.style.display = 'none';
+
+                const container = chatArea.querySelector('.max-w-4xl');
+                currentHistory.forEach(msg => {
+                    addMessageToDOM(msg.role, msg.text, msg.images || [], msg.timestamp);
+                });
+            }
+
+            // 현재 모델의 입력 상태 복원
+            restoreCurrentModelState();
+        }
+
+        // textarea 자동 높이 조절
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            const maxHeight = parseFloat(getComputedStyle(textarea).maxHeight);
+            const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+            textarea.style.height = newHeight + 'px';
+
+            // 최대 높이 초과 시 스크롤 활성화
+            if (textarea.scrollHeight > maxHeight) {
+                textarea.style.overflowY = 'auto';
+            } else {
+                textarea.style.overflowY = 'hidden';
+            }
+
+            // 입력창 높이 변화에 따라 채팅 영역 패딩 조절
+            updateChatAreaPadding();
+        }
+
+        // 입력창 높이 변화 감지 및 채팅 영역 패딩 조절
+        function updateChatAreaPadding() {
+            const inputWrapper = document.getElementById('inputAreaWrapper');
+            if (inputWrapper) {
+                const height = inputWrapper.offsetHeight;
+                chatArea.style.paddingBottom = (height + 16) + 'px';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initSession();
+            promptInput.addEventListener('input', updateSendButton);
+
+            // 클립보드 붙여넣기 이벤트
+            document.addEventListener('paste', handlePaste);
+
+            // localStorage에서 대화 복원
+            restoreMessages();
+
+            // 입력창 높이 변화 감지
+            const inputWrapper = document.getElementById('inputAreaWrapper');
+            if (inputWrapper) {
+                const resizeObserver = new ResizeObserver(() => {
+                    updateChatAreaPadding();
+                });
+                resizeObserver.observe(inputWrapper);
+                updateChatAreaPadding();
+            }
+        });
+
+        async function initSession() {
+            try {
+                // 텍스트 모델 세션이 없으면 생성
+                if (!textSessionId) {
+                    const response = await fetch('api.php?action=newSession');
+                    const data = await response.json();
+                    textSessionId = data.sessionId;
+                }
+
+                // 이미지 모델 세션이 없으면 생성
+                if (!imageSessionId) {
+                    const response = await fetch('api.php?action=newSession');
+                    const data = await response.json();
+                    imageSessionId = data.sessionId;
+                }
+            } catch (error) {
+                console.error('세션 초기화 실패:', error);
+            }
+        }
+
+        function setModel(model) {
+            const previousModel = currentModel;
+            currentModel = model;
+            const isImageMode = model.includes('image');
+
+            // 모델이 실제로 변경되었을 때만 대화 내역 전환
+            if (previousModel !== model) {
+                switchModelMessages();
+            }
+
+            // localStorage에 모델 저장
+            saveToLocalStorage();
+
+            // Update tabs
+            document.getElementById('tabText').className = isImageMode
+                ? 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                : 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-blue-600 text-white shadow-lg shadow-blue-900/20';
+
+            document.getElementById('tabImage').className = isImageMode
+                ? 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-purple-600 text-white shadow-lg shadow-purple-900/20'
+                : 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors text-slate-400 hover:text-slate-200 hover:bg-slate-700/50';
+
+            // Show/hide image tip
+            const imageTip = document.getElementById('imageTip');
+            if (imageTip) {
+                imageTip.className = isImageMode
+                    ? 'px-3 py-2 text-xs text-slate-400 bg-slate-900/50 rounded-lg mx-2'
+                    : 'hidden';
+            }
+
+            // Update placeholder
+            promptInput.placeholder = isImageMode
+                ? '생성할 이미지를 설명해주세요...'
+                : 'Gemini에게 질문하세요...';
+
+            // Update model label
+            document.getElementById('modelLabel').textContent = isImageMode
+                ? 'Powered by Gemini 3 Pro Image (Nano Banana 2)'
+                : 'Powered by Gemini 3 Pro';
+
+            // Update example buttons
+            const exampleButtons = document.getElementById('exampleButtons');
+            if (exampleButtons) {
+                if (isImageMode) {
+                    // Nano Banana 2 - 이미지 생성 예제
+                    exampleButtons.innerHTML = `
+                        <button onclick="setPrompt('사이버펑크 도시의 네온 거리')" class="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all">사이버펑크 도시의 네온 거리</button>
+                        <button onclick="setPrompt('우주를 배경으로 한 고양이 우주비행사')" class="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all">우주를 배경으로 한 고양이 우주비행사</button>
+                        <button onclick="setPrompt('수채화 풍경의 봄날 벚꽃길')" class="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all">수채화 풍경의 봄날 벚꽃길</button>
+                    `;
+                } else {
+                    // Gemini 3 Pro - 텍스트 모델 예제
+                    exampleButtons.innerHTML = `
+                        <button onclick="setPrompt('파이썬으로 퀵소트 알고리즘 구현해줘')" class="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all">파이썬으로 퀵소트 알고리즘 구현해줘</button>
+                        <button onclick="setPrompt('양자컴퓨팅의 원리를 쉽게 설명해줘')" class="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all">양자컴퓨팅의 원리를 쉽게 설명해줘</button>
+                        <button onclick="setPrompt('인공지능 윤리의 주요 쟁점은?')" class="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full text-xs text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all">인공지능 윤리의 주요 쟁점은?</button>
+                    `;
+                }
+            }
+        }
+
+        function setPrompt(text) {
+            promptInput.value = text;
+            promptInput.focus();
+            updateSendButton();
+        }
+
+        function updateSendButton() {
+            const uploadedImages = getCurrentUploadedImages();
+            const hasContent = promptInput.value.trim() || uploadedImages.length > 0;
+            sendBtn.className = hasContent && !isGenerating
+                ? 'mr-2 p-2.5 rounded-lg transition-all bg-blue-600 text-white hover:bg-blue-500 shadow-md'
+                : 'mr-2 p-2.5 rounded-lg transition-all bg-slate-800 text-slate-600 cursor-not-allowed';
+            sendBtn.disabled = !hasContent || isGenerating;
+
+            // Retry 버튼 상태 업데이트
+            document.querySelectorAll('.retry-btn').forEach(btn => {
+                btn.disabled = isGenerating;
+            });
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // 이미지 압축 함수
+        function compressImage(file, maxWidth = 1024, quality = 0.8) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        // 최대 크기 제한
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                        if (height > maxWidth) {
+                            width = (width * maxWidth) / height;
+                            height = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // JPEG로 압축
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve({
+                            data: compressedDataUrl.split(',')[1],
+                            mimeType: 'image/jpeg',
+                            preview: compressedDataUrl
+                        });
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleFileSelect(e) {
+            const files = e.target.files;
+            const maxImages = 14;
+            const uploadedImages = getCurrentUploadedImages();
+            const remainingSlots = maxImages - uploadedImages.length;
+
+            for (const file of Array.from(files).slice(0, remainingSlots)) {
+                if (file.type.startsWith('image/')) {
+                    try {
+                        // 이미지 압축 (1024px, 품질 80%)
+                        const compressed = await compressImage(file, 1024, 0.8);
+                        uploadedImages.push(compressed);
+                        setCurrentUploadedImages(uploadedImages);
+                        updateAttachmentPreview();
+                        updateSendButton();
+                    } catch (err) {
+                        console.error('이미지 압축 실패:', err);
+                    }
+                }
+            }
+            e.target.value = '';
+        }
+
+        async function handlePaste(e) {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            const maxImages = 14;
+            const uploadedImages = getCurrentUploadedImages();
+            const remainingSlots = maxImages - uploadedImages.length;
+
+            if (remainingSlots <= 0) {
+                console.log('최대 이미지 개수 도달');
+                return;
+            }
+
+            let addedCount = 0;
+            for (const item of items) {
+                if (item.type.startsWith('image/') && addedCount < remainingSlots) {
+                    e.preventDefault(); // 기본 붙여넣기 동작 방지
+
+                    const file = item.getAsFile();
+                    if (file) {
+                        try {
+                            // 이미지 압축 (1024px, 품질 80%)
+                            const compressed = await compressImage(file, 1024, 0.8);
+                            uploadedImages.push(compressed);
+                            setCurrentUploadedImages(uploadedImages);
+                            addedCount++;
+                            updateAttachmentPreview();
+                            updateSendButton();
+
+                            // 시각적 피드백
+                            attachmentPreview.classList.add('ring-2', 'ring-blue-500');
+                            setTimeout(() => {
+                                attachmentPreview.classList.remove('ring-2', 'ring-blue-500');
+                            }, 500);
+                        } catch (err) {
+                            console.error('이미지 압축 실패:', err);
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateAttachmentPreview() {
+            const uploadedImages = getCurrentUploadedImages();
+            if (uploadedImages.length === 0) {
+                attachmentPreview.className = 'hidden';
+                return;
+            }
+
+            attachmentPreview.className = 'flex gap-2 px-2 pb-1 overflow-x-auto';
+            attachmentPreview.innerHTML = uploadedImages.map((img, i) => `
+                <div class="relative group shrink-0">
+                    <img src="${img.preview}" alt="attachment" class="h-16 w-16 object-cover rounded-lg border border-slate-600">
+                    <button onclick="removeImage(${i})" class="absolute -top-1.5 -right-1.5 bg-slate-700 text-slate-200 rounded-full p-0.5 border border-slate-500 hover:bg-red-500 hover:border-red-600 transition-colors shadow-sm">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeImage(index) {
+            const uploadedImages = getCurrentUploadedImages();
+            uploadedImages.splice(index, 1);
+            setCurrentUploadedImages(uploadedImages);
+            updateAttachmentPreview();
+            updateSendButton();
+        }
+
+        async function sendMessage() {
+            const prompt = promptInput.value.trim();
+            const uploadedImages = getCurrentUploadedImages();
+            if ((!prompt && uploadedImages.length === 0) || isGenerating) return;
+
+            // Hide welcome message
+            if (welcomeMessage) welcomeMessage.style.display = 'none';
+
+            isGenerating = true;
+            updateSendButton();
+
+            // Add user message
+            addMessage('user', prompt, uploadedImages.map(img => img.preview));
+
+            // 마지막 이미지 저장 (보낸 이미지)
+            const sentImages = [...uploadedImages];
+            if (uploadedImages.length > 0) {
+                setCurrentLastGeneratedImages([...uploadedImages]);
+            }
+
+            // Clear input
+            promptInput.value = '';
+            promptInput.style.height = 'auto';
+            setCurrentPrompt('');
+            setCurrentUploadedImages([]);
+            updateAttachmentPreview();
+            updateSendButton();
+            updateChatAreaPadding();
+
+            // Show loading
+            currentAbortController = new AbortController();
+            const loadingId = showLoading(currentAbortController);
+
+            try {
+                const requestData = {
+                    prompt: prompt,
+                    model: currentModel,
+                    sessionId: getCurrentSessionId(),
+                    images: sentImages.map(img => ({
+                        data: img.data,
+                        mimeType: img.mimeType
+                    }))
+                };
+
+                console.log('📤 API 요청:', {
+                    model: requestData.model,
+                    imagesCount: requestData.images.length
+                });
+
+                const response = await fetch('api.php?action=generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData),
+                    signal: currentAbortController.signal
+                });
+
+                // keep-alive 공백 제거 후 JSON 파싱
+                const rawText = await response.text();
+                const jsonText = rawText.trim();
+                if (jsonText.startsWith('<')) {
+                    throw new Error('서버 타임아웃 - 잠시 후 다시 시도해주세요');
+                }
+                const data = JSON.parse(jsonText);
+                console.log('📥 API 응답:', data);
+                removeLoading(loadingId);
+                currentAbortController = null;
+
+                if (data.error) {
+                    console.error('❌ API 에러:', data.error);
+                    addErrorMessage(data.error);
+                } else {
+                    console.log('✅ 성공:', {
+                        텍스트길이: data.text?.length || 0,
+                        이미지개수: data.images?.length || 0
+                    });
+                    if (data.sessionId) setCurrentSessionId(data.sessionId);
+                    const images = data.images ? data.images.map(img =>
+                        `data:${img.mimeType};base64,${img.data}`
+                    ) : [];
+                    addMessage('model', data.text, images);
+
+                    // 생성된 이미지가 있으면 자동으로 다시 첨부
+                    if (images.length > 0) {
+                        const generatedImages = images.map(src => ({
+                            data: src.split(',')[1],
+                            mimeType: src.match(/data:([^;]+);/)[1],
+                            preview: src
+                        }));
+                        setCurrentLastGeneratedImages(generatedImages);
+                        // 자동으로 이미지 재첨부
+                        setCurrentUploadedImages([...generatedImages]);
+                        updateAttachmentPreview();
+                    } else {
+                        const lastGeneratedImages = getCurrentLastGeneratedImages();
+                        if (lastGeneratedImages.length > 0) {
+                            // 이미지가 생성되지 않았으면 이전에 보낸 이미지 재첨부
+                            setCurrentUploadedImages([...lastGeneratedImages]);
+                            updateAttachmentPreview();
+                        }
+                    }
+                }
+            } catch (error) {
+                removeLoading(loadingId);
+                currentAbortController = null;
+                if (error.name === 'AbortError') {
+                    // 사용자가 중단함 - 에러 메시지 표시 안함
+                    console.log('🛑 요청 중단됨');
+                } else {
+                    addErrorMessage('네트워크 오류: ' + error.message);
+                }
+            }
+
+            isGenerating = false;
+            updateSendButton();
+        }
+
+        // 생성 중단 함수
+        function abortGeneration(loadingId) {
+            if (currentAbortController) {
+                currentAbortController.abort();
+                currentAbortController = null;
+            }
+            removeLoading(loadingId);
+            isGenerating = false;
+            updateSendButton();
+
+            // 마지막 user 메시지 삭제
+            const container = chatArea.querySelector('.max-w-4xl');
+            const messages = container.querySelectorAll('.group\\/msg');
+            if (messages.length > 0) {
+                const lastMsg = messages[messages.length - 1];
+                // user 메시지인 경우에만 삭제
+                if (lastMsg.classList.contains('justify-end')) {
+                    lastMsg.remove();
+                    // 히스토리에서도 삭제
+                    const history = isImageModel() ? imageMessageHistory : textMessageHistory;
+                    if (history.length > 0) {
+                        history.pop();
+                    }
+                }
+            }
+        }
+
+        function addMessageToDOM(role, text, images = [], timestamp = null, messageIndex = null) {
+            const container = chatArea.querySelector('.max-w-4xl');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex gap-4 ${role === 'user' ? 'justify-end' : 'justify-start'} group/msg`;
+
+            const isUser = role === 'user';
+            const avatarHtml = isUser
+                ? `<div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 mt-1">
+                    <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                   </div>`
+                : `<div class="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center flex-shrink-0 border border-indigo-500/30 mt-1">
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                   </div>`;
+
+            // Retry 버튼 (user 메시지에만)
+            const retryBtnHtml = isUser ? `
+                <div class="retry-btn-wrapper opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 transition-opacity flex gap-1 mt-1">
+                    <button onclick="retryMessage(this)" class="retry-btn p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-slate-500 disabled:hover:bg-transparent" title="다시 시도">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                    </button>
+                </div>
+            ` : '';
+
+            let imagesHtml = '';
+            if (images.length > 0) {
+                if (isUser) {
+                    imagesHtml = `<div class="flex flex-wrap gap-2 mb-3">
+                        ${images.map(src => `<img src="${src}" alt="User upload" class="h-24 w-24 object-cover rounded-lg border border-white/20 cursor-pointer" onclick="showModal('${src}')">`).join('')}
+                    </div>`;
+                } else {
+                    imagesHtml = `<div class="relative group mt-2 rounded-xl overflow-hidden border border-slate-700 bg-slate-900/50 inline-block max-w-full">
+                        ${images.map(src => `
+                            <img src="${src}" alt="Generated" class="max-h-[500px] w-auto object-contain rounded-lg cursor-pointer" onclick="showModal('${src}')" loading="lazy">
+                            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a href="${src}" download="gemini-${Date.now()}.png" class="p-2 bg-slate-900/80 text-white rounded-lg hover:bg-slate-800 backdrop-blur-sm flex items-center gap-2 text-xs font-medium border border-slate-700" onclick="event.stopPropagation()">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    저장
+                                </a>
+                            </div>
+                        `).join('')}
+                    </div>`;
+                }
+            }
+
+            const time = timestamp
+                ? new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                : new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            msgDiv.innerHTML = `
+                ${!isUser ? avatarHtml : ''}
+                <div class="flex flex-col max-w-[85%] sm:max-w-[75%] ${isUser ? 'items-end' : 'items-start'}">
+                    <div class="msg-content rounded-2xl px-5 py-3.5 shadow-sm ${isUser ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-slate-800 border border-slate-700 rounded-tl-sm'}">
+                        ${isUser ? imagesHtml : ''}
+                        ${text ? `<div class="msg-text prose prose-invert prose-sm max-w-none leading-relaxed whitespace-pre-wrap">${escapeHtml(text)}</div>` : ''}
+                        ${!isUser ? imagesHtml : ''}
+                    </div>
+                    <div class="flex items-center gap-2 ${isUser ? 'flex-row-reverse' : ''}">
+                        <span class="text-[10px] text-slate-600 mt-1.5 px-1 font-mono">${time}</span>
+                        ${retryBtnHtml}
+                    </div>
+                </div>
+                ${isUser ? avatarHtml : ''}
+            `;
+
+            // 이미지 데이터 저장 (retry용)
+            if (isUser && images.length > 0) {
+                msgDiv.dataset.images = JSON.stringify(images);
+            }
+
+            container.appendChild(msgDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Retry 기능
+        function retryMessage(btn) {
+            // 생성 중이면 무시
+            if (isGenerating) return;
+
+            const msgDiv = btn.closest('.group\\/msg');
+            const textEl = msgDiv.querySelector('.msg-text');
+            const text = textEl ? textEl.textContent : '';
+            const imagesData = msgDiv.dataset.images;
+
+            // 이 메시지와 그 이후 응답 삭제
+            let nextSibling = msgDiv.nextElementSibling;
+            while (nextSibling) {
+                const toRemove = nextSibling;
+                nextSibling = nextSibling.nextElementSibling;
+                toRemove.remove();
+            }
+            msgDiv.remove();
+
+            // 히스토리에서도 삭제 (마지막 user 메시지와 model 응답)
+            const history = isImageModel() ? imageMessageHistory : textMessageHistory;
+            // 마지막 두 개 삭제 (user + model)
+            if (history.length >= 2) {
+                history.pop(); // model
+                history.pop(); // user
+            } else if (history.length === 1) {
+                history.pop();
+            }
+
+            // 이미지 복원
+            if (imagesData) {
+                const images = JSON.parse(imagesData);
+                const uploadedImages = images.map(src => {
+                    const match = src.match(/data:([^;]+);base64,(.+)/);
+                    return match ? { data: match[2], mimeType: match[1], preview: src } : null;
+                }).filter(Boolean);
+                setCurrentUploadedImages(uploadedImages);
+                updateAttachmentPreview();
+            }
+
+            // 입력창에 텍스트 복원 후 전송
+            document.getElementById('promptInput').value = text;
+            sendMessage();
+        }
+
+        function addMessage(role, text, images = []) {
+            const timestamp = Date.now();
+
+            // DOM에 메시지 추가
+            addMessageToDOM(role, text, images, timestamp);
+
+            // 현재 모델의 히스토리에 저장
+            const messageData = {
+                role: role,
+                text: text,
+                images: images,
+                timestamp: timestamp
+            };
+
+            if (isImageModel()) {
+                imageMessageHistory.push(messageData);
+            } else {
+                textMessageHistory.push(messageData);
+            }
+
+            // localStorage에 저장
+            saveToLocalStorage();
+        }
+
+        function addErrorMessage(error) {
+            const container = chatArea.querySelector('.max-w-4xl');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'flex gap-4 justify-start';
+            errorDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-red-600/20 flex items-center justify-center flex-shrink-0 border border-red-500/30 mt-1">
+                    <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="bg-red-900/20 border border-red-500/30 rounded-2xl rounded-tl-sm px-5 py-3.5 text-red-400 text-sm">
+                    ${escapeHtml(error)}
+                </div>
+            `;
+            container.appendChild(errorDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showLoading(abortController) {
+            const id = 'loading-' + Date.now();
+            const container = chatArea.querySelector('.max-w-4xl');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = id;
+            loadingDiv.className = 'flex gap-4 justify-start group/loading';
+
+            // 재밌는 로딩 문구들
+            const loadingMessages = [
+                '생각 중',
+                '가열 중',
+                '영감 수집 중',
+                '서랍 뒤지는 중',
+                '천재성 발휘 중',
+                'GPT 채찍질 중',
+                '예술혼 불태우는 중',
+                '고양이에게 물어보는 중',
+                '랜덤박스 까는 중',
+                '행운의 주사위 굴리는 중',
+                'Claude랑 커피 마시는 중',
+                '차원문 여는 중',
+                '마법진 그리는 중',
+                '버그와 협상 중'
+            ];
+
+            loadingDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-indigo-600/20 flex items-center justify-center flex-shrink-0 border border-indigo-500/30">
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div class="flex flex-col items-start">
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-sm px-5 py-4 flex items-center justify-center gap-2">
+                        <span id="${id}-text" class="text-slate-400 text-sm" style="display: none;"></span>
+                        <div id="${id}-spinner-wrapper" class="loading-spinner-wrapper" style="display: none;">
+                            <div class="loading-spinner"></div>
+                        </div>
+                        <div id="${id}-dots" class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 bg-slate-500 rounded-full animate-bounce-dot" style="animation-delay: 0ms"></span>
+                            <span class="w-2 h-2 bg-slate-500 rounded-full animate-bounce-dot" style="animation-delay: 150ms"></span>
+                            <span class="w-2 h-2 bg-slate-500 rounded-full animate-bounce-dot" style="animation-delay: 300ms"></span>
+                        </div>
+                    </div>
+                    <div class="opacity-100 sm:opacity-0 sm:group-hover/loading:opacity-100 transition-opacity flex gap-1 mt-1">
+                        <button onclick="abortGeneration('${id}')" class="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors" title="생성 중단">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(loadingDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            // 텍스트를 각 글자로 분리해서 통통 튀게 만드는 함수
+            function updateLoadingText() {
+                const textEl = document.getElementById(`${id}-text`);
+                if (!textEl) return;
+
+                const message = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+                const chars = message.split('');
+                textEl.innerHTML = chars.map((char, i) => {
+                    // 공백 문자는 &nbsp;로 변환
+                    const displayChar = char === ' ' ? '&nbsp;' : char;
+                    return `<span class="loading-char" style="animation-delay: ${i * 50}ms">${displayChar}</span>`;
+                }).join('');
+            }
+
+            // 3초 후 ... 점 숨기고 스피너와 텍스트 표시
+            setTimeout(() => {
+                const textEl = document.getElementById(`${id}-text`);
+                const spinnerWrapperEl = document.getElementById(`${id}-spinner-wrapper`);
+                const dotsEl = document.getElementById(`${id}-dots`);
+
+                if (textEl && spinnerWrapperEl && dotsEl) {
+                    // ... 점 숨기기
+                    dotsEl.style.display = 'none';
+
+                    // 스피너와 텍스트 표시
+                    spinnerWrapperEl.style.display = 'inline-block';
+                    textEl.style.display = 'inline';
+                    updateLoadingText();
+
+                    // 첫 글씨가 나타난 후부터 5초마다 텍스트 변경
+                    const intervalId = setInterval(() => {
+                        updateLoadingText();
+                    }, 5000);
+
+                    // interval ID 저장 (나중에 정리용)
+                    loadingDiv.dataset.intervalId = intervalId;
+                }
+            }, 3000);
+
+            return id;
+        }
+
+        function removeLoading(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                // interval 정리
+                const intervalId = el.dataset.intervalId;
+                if (intervalId) {
+                    clearInterval(parseInt(intervalId));
+                }
+                el.remove();
+            }
+        }
+
+        function showModal(src) {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImage');
+            const dl = document.getElementById('downloadBtn');
+            img.src = src;
+            dl.href = src;
+            dl.download = `gemini-${Date.now()}.png`;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal(e) {
+            if (!e || e.target.id === 'imageModal') {
+                const modal = document.getElementById('imageModal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        async function newSession() {
+            // 현재 화면 클리어
+            const container = chatArea.querySelector('.max-w-4xl');
+            const messages = container.querySelectorAll('.flex.gap-4');
+            messages.forEach(msg => msg.remove());
+
+            if (welcomeMessage) {
+                welcomeMessage.style.display = 'flex';
+            }
+
+            // 현재 모델의 세션만 초기화
+            if (isImageModel()) {
+                const response = await fetch('api.php?action=newSession');
+                const data = await response.json();
+                imageSessionId = data.sessionId;
+            } else {
+                const response = await fetch('api.php?action=newSession');
+                const data = await response.json();
+                textSessionId = data.sessionId;
+            }
+
+            // 현재 모델의 상태 초기화
+            setCurrentUploadedImages([]);
+            setCurrentLastGeneratedImages([]);
+            setCurrentPrompt('');
+            promptInput.value = '';
+            updateAttachmentPreview();
+            updateSendButton();
+
+            // 현재 모델의 localStorage만 클리어
+            clearLocalStorage('current');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

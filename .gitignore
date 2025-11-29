@@ -1,0 +1,27 @@
+# 보안 파일
+password-config.js
+
+# 세션 파일
+sessions/
+session_*.json
+
+# 로그 파일
+error.log
+*.log
+
+# 환경 설정
+.env
+.env.local
+
+# IDE 설정
+.vscode/
+.idea/
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# 임시 파일
+*.tmp
+*.temp
+*.swp

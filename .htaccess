@@ -1,0 +1,7 @@
+# config.php 파일 직접 접근 차단
+<Files "config.php">
+    Deny from all
+</Files>
+
+# 디렉토리 목록 비활성화
+Options -Indexes
